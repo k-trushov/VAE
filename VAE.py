@@ -3,12 +3,13 @@ import os
 from PIL import Image
 import torch
 import torchvision
+import datetime
 
-num_epochs = 1
+num_epochs = 20
 
 def to_img(x):
     #x = 0.5 * (x + 1)
-    x = x.clamp(0, 1)
+    x = x.clamp(0, 255)
     x = x.view(x.size(0), 3, 100, 100)
     return x
 
@@ -54,41 +55,56 @@ class autoencoder(torch.nn.Module):
             torch.nn.MaxPool2d((2,2))
         )
         self.decoder = torch.nn.Sequential(
-            torch.nn.ConvTranspose2d(512,469, (10, 10)),
+            torch.nn.ConvTranspose2d(512,482, (7, 7)),
             torch.nn.ReLU(True),
             
-            torch.nn.ConvTranspose2d(469,426, (10, 10)),
+            torch.nn.ConvTranspose2d(482,452, (7, 7)),
             torch.nn.ReLU(True),
             
-            torch.nn.ConvTranspose2d(426,383, (10, 10)),
+            torch.nn.ConvTranspose2d(452,422, (7, 7)),
             torch.nn.ReLU(True),
             
-            torch.nn.ConvTranspose2d(383,340, (9, 9)),
+            torch.nn.ConvTranspose2d(422,392, (7, 7)),
             torch.nn.ReLU(True),
             
-            torch.nn.ConvTranspose2d(340,297, (9, 9)),
+            torch.nn.ConvTranspose2d(392,362, (7, 7)),
             torch.nn.ReLU(True),
             
-            torch.nn.ConvTranspose2d(297,254, (9, 9)),
+            torch.nn.ConvTranspose2d(362,332, (7, 7)),
             torch.nn.ReLU(True),
             
-            torch.nn.ConvTranspose2d(254,211, (9, 9)),
+            torch.nn.ConvTranspose2d(332,302, (7, 7)),
             torch.nn.ReLU(True),
             
-            torch.nn.ConvTranspose2d(211,168, (9, 9)),
+            torch.nn.ConvTranspose2d(302,272, (7, 7)),
             torch.nn.ReLU(True),
             
-            torch.nn.ConvTranspose2d(168,125, (9, 9)),
+            torch.nn.ConvTranspose2d(272,242, (7, 7)),
             torch.nn.ReLU(True),
             
-            torch.nn.ConvTranspose2d(125,82,(9, 9)),
+            torch.nn.ConvTranspose2d(242,212,(7, 7)),
             torch.nn.ReLU(True),
             
-            torch.nn.ConvTranspose2d(82,39,(9, 9)),
+            torch.nn.ConvTranspose2d(212,182,(7, 7)),
             torch.nn.ReLU(True),
             
-            torch.nn.ConvTranspose2d(39,3,  (9, 9)),
+            torch.nn.ConvTranspose2d(182,152,  (7, 7)),
             torch.nn.ReLU(True),
+
+	    torch.nn.ConvTranspose2d(152,122,(7,7)),
+	    torch.nn.ReLU(True),
+
+	    torch.nn.ConvTranspose2d(122,92,(7,7)),
+	    torch.nn.ReLU(True),
+
+	    torch.nn.ConvTranspose2d(92,62,(6,6)),
+	    torch.nn.ReLU(True),
+
+	    torch.nn.ConvTranspose2d(62,32,(6,6)),
+	    torch.nn.ReLU(True),
+
+	    torch.nn.ConvTranspose2d(32,3,(6,6)),
+	    torch.nn.ReLU(True)
         )
 
     def forward(self, x):
@@ -108,7 +124,10 @@ def train():
 
     for epoch in range(num_epochs):
         print('Training of epoch [{}/{}]'.format(epoch+1, num_epochs))
+        k = 0
         for data in load_dataset("."+os.sep+"test_training"+os.sep):
+            print(datetime.datetime.now(), epoch+1, k)
+            k = k + 1
             img, _ = data
             img = torch.autograd.Variable(img).to(device)
         # ===================forward=====================
@@ -121,11 +140,11 @@ def train():
         # ===================log========================
         print('epoch [{}/{}], loss:{:.4f}'.format(epoch+1, num_epochs, loss.data[0]))
 
-        if epoch % 10 == 0:
+        if epoch % 5 == 0:
             pic = to_img(output.cpu().data)
-            save_image(pic, './dc_img/image_{}.png'.format(epoch))
+            torchvision.utils.save_image(pic, './dc_img/image_{}.png'.format(epoch))
 
-    torch.save(model.state_dict(), './conv_autoencoder.pth')
+        torch.save(model.state_dict(), './conv_autoencoder.pth')
 
 train()
 
